@@ -1,46 +1,35 @@
-name: "Develop pipeline for RUUUUUUUuuuby"
+name: Develop CI/CD
 
 on:
   push:
-    branches:
-      - develop
-
-env:
-  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    branches: [develop]
 
 jobs:
-  lint:
+  build-test-and-push:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
 
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.1'
-      
-      - name: Install Dependencies
-        run: bundle install
+          bundler-cache: true
 
-      - name: Lynter
-        run: gem install rubocop && bundle exec rubocop
+      - run: bundle exec rubocop
+      - run: gem install bundler-audit && bundler-audit update && bundler-audit check
+      - run: bundle exec rspec
 
-      - name: Scan for Vulns
-        run: gem install bundler-audit && bundler-audit update && bundler-audit check
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Run unit tests
-        run: bundle exec rspec
+      - run: docker build -t charlie1979/ruby-app:develop -t charlie1979/ruby-app:${GITHUB_SHA::7} .
 
-      - name: Build Image
-        run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/ruby-app:${{ github.ref_name }} -t ${{ secrets.DOCKER_USERNAME }}/ruby-app:${{ github.ref_name }}-$(git rev-parse --short HEAD)
+      - run: docker push charlie1979/ruby-app:develop
 
-      - name: Push Docker Image
-        run: |
-          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push ${{ secrets.DOCKER_USERNAME }}/ruby-app:${{ github.ref_name }} ${{ secrets.DOCKER_USERNAME }}/ruby-app:${{ github.ref_name }}-$(git rev-parse --short HEAD)
+      - run: docker push charlie1979/ruby-app:${GITHUB_SHA::7}
 
       
       
