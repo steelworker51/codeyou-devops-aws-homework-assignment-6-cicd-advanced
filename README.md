@@ -116,3 +116,4 @@ Students will design and implement a CI/CD pipeline using **GitHub Actions** for
     - 10pts: In addition to tagging and pushing two images with the `develop` and `main` tags, successfully tag and push a Docker image using the short version of the git commit hash that triggered the pipeline.
         - **Outcome**: Have an image in your repo named/tagged as `<your username>/ruby-app:243883d`.
     - 5pts: Explain why tagging an image using the git commit is a good idea. Your answer  be evaluated for AI inspiration :) # trigger actions
+
